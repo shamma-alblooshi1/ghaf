@@ -28,6 +28,7 @@ in {
     element-desktop = mkProgramOption "Element desktop" config.ghaf.graphics.enableDemoApplications;
     zathura = mkProgramOption "zathura" config.ghaf.graphics.enableDemoApplications;
     appflowy = mkProgramOption "Appflowy" config.ghaf.graphics.enableDemoApplications;
+    trusted = mkProgramOption "Trusted browser" false;
   };
 
   config = lib.mkIf config.ghaf.profiles.graphics.enable {
@@ -41,6 +42,11 @@ in {
         name = "Firefox";
         path = "${pkgs.firefox}/bin/firefox";
         icon = "${pkgs.icon-pack}/firefox.svg";
+      }
+      ++ lib.optional cfg.trusted {
+        name = "Trusted Browser";
+        path = "${pkgs.chromium}/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland";
+        icon = "${pkgs.icon-pack}/chromium.svg";  
       }
       ++ lib.optional cfg.element-desktop {
         name = "Element";
@@ -68,6 +74,7 @@ in {
       ++ lib.optional cfg.firefox pkgs.firefox
       ++ lib.optional cfg.gala-app pkgs.gala-app
       ++ lib.optional cfg.zathura pkgs.zathura
-      ++ lib.optional (cfg.appflowy && pkgs.stdenv.isx86_64) pkgs.appflowy;
+      ++ lib.optional (cfg.appflowy && pkgs.stdenv.isx86_64) pkgs.appflowy
+      ++ lib.optional cfg.trusted pkgs.chromium;
   };
 }
