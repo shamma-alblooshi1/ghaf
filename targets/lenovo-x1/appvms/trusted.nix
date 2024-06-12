@@ -1,13 +1,11 @@
 # Copyright 2024 TII (SSRC) and the Ghaf contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-{pkgs, ...}: let
+{ pkgs,lib,config, ... }: let
   xdgPdfPort = 1200;
 in {
   name = "trusted";
   packages = let
-    # PDF XDG handler is executed when the user opens a PDF file in the browser
-    # The xdgopenpdf script sends a command to the guivm with the file path over TCP connection
     xdgPdfItem = pkgs.makeDesktopItem {
       name = "ghaf-pdf";
       desktopName = "Ghaf PDF handler";
@@ -24,8 +22,8 @@ in {
     pkgs.xdg-utils
     xdgPdfItem
     xdgOpenPdf
+    pkgs.nftables
   ];
-  # TODO create a repository of mac addresses to avoid conflicts
   macAddress = "02:00:00:03:10:01";
   ramMb = 3072;
   cores = 4;
@@ -33,11 +31,18 @@ in {
     {
       time.timeZone = "Asia/Dubai";
 
-      # Disable chromium built-in PDF viewer to make it execute xdg-open
       programs.chromium.enable = true;
       programs.chromium.extraOpts."AlwaysOpenPdfExternally" = true;
-      # Set default PDF XDG handler
       xdg.mime.defaultApplications."application/pdf" = "ghaf-pdf.desktop";
+
+      networking = {
+      firewall.enable = true;
+      firewall.extraCommands = "
+      # Block HTTP and HTTPS traffic
+      iptables -A OUTPUT -p tcp --dport 80 -j REJECT
+      iptables -A OUTPUT -p tcp --dport 443 -j REJECT
+      ";
+    };
     }
   ];
   borderColor = "#00FF00";
