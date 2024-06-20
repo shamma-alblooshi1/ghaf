@@ -23,6 +23,8 @@ in {
     xdgPdfItem
     xdgOpenPdf
     pkgs.nftables
+    pkgs.globalprotect-openconnect
+    pkgs.openconnect
   ];
   macAddress = "02:00:00:03:10:01";
   ramMb = 3072;
@@ -35,22 +37,45 @@ in {
       programs.chromium.extraOpts."AlwaysOpenPdfExternally" = true;
       xdg.mime.defaultApplications."application/pdf" = "ghaf-pdf.desktop";
 
+     
       networking = {
       firewall.enable = true;
-      firewall.extraCommands = "   
-      iptables -F
+      # firewall.extraCommands = "   
+      # iptables -F
 
-      # Allow Microsoft365 only
-      iptables -I OUTPUT -p tcp -d 13.107.6.156 --dport 80 -j ACCEPT
-      iptables -I OUTPUT -p tcp -d 13.107.6.156 --dport 443 -j ACCEPT
-      iptables -I nixos-fw-accept -p tcp -d 13.107.6.156 --dport 80 -j ACCEPT
-      iptables -I nixos-fw-accept -p tcp -d 13.107.6.156 --dport 443 -j ACCEPT
+      # # Allow Microsoft365 only
+      # iptables -I OUTPUT -p tcp -d 13.107.6.156 --dport 80 -j ACCEPT
+      # iptables -I OUTPUT -p tcp -d 13.107.6.156 --dport 443 -j ACCEPT
+      # iptables -I nixos-fw-accept -p tcp -d 13.107.6.156 --dport 80 -j ACCEPT
+      # iptables -I nixos-fw-accept -p tcp -d 13.107.6.156 --dport 443 -j ACCEPT
 
-      # Block HTTP and HTTPS traffic
-      iptables -A OUTPUT -p tcp --dport 80 -j REJECT
-      iptables -A OUTPUT -p tcp --dport 443 -j REJECT
-      ";
+      # # Block HTTP and HTTPS traffic
+      # iptables -A OUTPUT -p tcp --dport 80 -j REJECT
+      # iptables -A OUTPUT -p tcp --dport 443 -j REJECT
+      # ";
     };
+
+  systemd.services.globalprotect = {
+    enable = true;
+    #csdWrapper = "${pkgs.openconnect}/libexec/openconnect/hipreport.sh";
+  };
+
+  # This also enable the gpclient.
+  systemd.services = {
+    gpclient = {
+      description = "A GlobalProtect VPN client (GUI)";
+      wantedBy = [ "multi-user.target" ];
+      enable = true;
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.globalprotect-openconnect}/bin/gpclient";
+        Restart = "on-failure";
+        RestartSec = 3;
+      };
+     
+    };
+  };
+
     }
   ];
   borderColor = "#00FF00";
