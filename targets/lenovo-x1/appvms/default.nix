@@ -11,6 +11,7 @@
   gala = import ./gala.nix {inherit pkgs lib config;};
   zathura = import ./zathura.nix {inherit pkgs;};
   element = import ./element.nix {inherit pkgs config;};
+  trusted = import ./trusted.nix {inherit pkgs lib config;};
   includeAppflowy = pkgs.stdenv.isx86_64;
   appflowy =
     if includeAppflowy
@@ -22,6 +23,7 @@
       gala
       zathura
       element
+      trusted
     ]
     ++ pkgs.lib.optional includeAppflowy appflowy;
 in
