@@ -37,7 +37,15 @@ in {
 
       networking = {
       firewall.enable = true;
-      firewall.extraCommands = "
+      firewall.extraCommands = "   
+      iptables -F
+
+      # Allow Microsoft365 only
+      iptables -I OUTPUT -p tcp -d 13.107.6.156 --dport 80 -j ACCEPT
+      iptables -I OUTPUT -p tcp -d 13.107.6.156 --dport 443 -j ACCEPT
+      iptables -I nixos-fw-accept -p tcp -d 13.107.6.156 --dport 80 -j ACCEPT
+      iptables -I nixos-fw-accept -p tcp -d 13.107.6.156 --dport 443 -j ACCEPT
+
       # Block HTTP and HTTPS traffic
       iptables -A OUTPUT -p tcp --dport 80 -j REJECT
       iptables -A OUTPUT -p tcp --dport 443 -j REJECT
