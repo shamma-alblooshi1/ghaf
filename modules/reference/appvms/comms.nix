@@ -14,12 +14,13 @@
     then config.ghaf.reference.services.dendrite
     else false;
 in {
-  name = "element";
+  name = "comms";
 
   packages =
     [
       pkgs.element-desktop
       pkgs.element-gps
+      pkgs.slack
       pkgs.gpsd
       pkgs.tcpdump
       pkgs.pulseaudio

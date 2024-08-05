@@ -16,6 +16,7 @@
     "element-desktop.svg"
     "firefox.svg"
     "preferences-system-network.svg"
+    "slack.svg"
     "system-lock-screen.svg"
     "system-reboot.svg"
     "system-shutdown.svg"
