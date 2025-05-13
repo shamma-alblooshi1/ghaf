@@ -1,7 +1,12 @@
 # Copyright 2024 TII (SSRC)
 # SPDX-License-Identifier: Apache-2.0
 
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.ghaf.reference.profiles.ai-dev;
 in
