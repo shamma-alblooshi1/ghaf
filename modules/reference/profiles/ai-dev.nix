@@ -26,7 +26,7 @@ in
       virtualization.microvm.appvm = {
         enable = true;
         vms = {
-          dev = {
+          
             enable = true;
 
             # Add Python and AI tools into this VM
@@ -40,24 +40,26 @@ in
               python310Packages.torch
               python310Packages.transformers
             ];
-          };
         };
       };
 
       reference = {
         appvms.enable = true;
 
-        personalize.keys.enable = true;
-
-        desktop.applications.enable = true;
-
         services = {
           enable = false;
           dendrite = false;
+          proxy-business = lib.mkForce config.ghaf.virtualization.microvm.appvm.vms.business.enable;
           google-chromecast = false;
+          alpaca-ollama = true;
           wireguard-gui = false;
-          alpaca-ollama = false;
         };
+
+        personalize = {
+          keys.enable = true;
+        };
+
+        desktop.applications.enable = true;
       };
 
       profiles = {
