@@ -26,19 +26,19 @@ in
       virtualization.microvm.appvm = {
         enable = true;
         vms = {
-            enable = true;
+          enable = true;
 
-            # Add Python and AI tools into this VM
-            user.packages = with pkgs; [
-              git
-              python310
-              python310Packages.pip
-              python310Packages.virtualenv
-              python310Packages.setuptools
-              python310Packages.wheel
-              python310Packages.torch
-              python310Packages.transformers
-            ];
+          # Add Python and AI tools into this VM
+          user.packages = with pkgs; [
+            git
+            python310
+            python310Packages.pip
+            python310Packages.virtualenv
+            python310Packages.setuptools
+            python310Packages.wheel
+            python310Packages.torch
+            python310Packages.transformers
+          ];
         };
       };
 
