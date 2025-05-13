@@ -60,6 +60,15 @@ let
         };
       }
     ]))
+    (laptop-configuration "lenovo-x1-carbon-gen11" "debug" (withCommonModules [
+      self.nixosModules.hardware-lenovo-x1-carbon-gen11
+      {
+        ghaf = {
+          reference.profiles.ai-dev.enable = true;
+          partitioning.disko.enable = true;
+        };
+      }
+    ]))
     (laptop-configuration "lenovo-x1-carbon-gen12" "debug" (withCommonModules [
       self.nixosModules.hardware-lenovo-x1-carbon-gen12
       {
