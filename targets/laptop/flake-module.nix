@@ -61,7 +61,7 @@ let
         };
       }
     ]))
-    (laptop-configuration "lenovo-x1-carbon-gen11" "debug" (withCommonModules [
+    (laptop-configuration "lenovo-x1-carbon-gen11-ai" "debug" (withCommonModules [
       self.nixosModules.hardware-lenovo-x1-carbon-gen11
       {
         ghaf = {
