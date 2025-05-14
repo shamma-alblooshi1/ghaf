@@ -1,6 +1,11 @@
 # Copyright 2022-2024 TII (SSRC) and the Ghaf contributors
 # SPDX-License-Identifier: Apache-2.0
-{ config, lib,pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.ghaf.reference.profiles.ai-dev;
 in
@@ -11,19 +16,18 @@ in
 
   config = lib.mkIf cfg.enable {
 
-      environment = {
-      systemPackages =
-        with pkgs; [
-      python311
-      python311Packages.pip
-      python311Packages.virtualenv
-      python311Packages.setuptools
-      python311Packages.wheel
-      python311Packages.torch
-      python311Packages.transformers
-    ];
-     };
-     
+    environment = {
+      systemPackages = with pkgs; [
+        python311
+        python311Packages.pip
+        python311Packages.virtualenv
+        python311Packages.setuptools
+        python311Packages.wheel
+        python311Packages.torch
+        python311Packages.transformers
+      ];
+    };
+
     ghaf = {
       # Enable below option for session lock feature
       graphics = {
@@ -40,7 +44,6 @@ in
         "comms-vm"
         "chrome-vm"
       ];
-
 
       virtualization.microvm.appvm = {
         enable = true;
