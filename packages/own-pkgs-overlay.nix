@@ -24,6 +24,7 @@
       final.python3Packages.callPackage ./python-packages/kernel-hardening-checker/package.nix
         { };
     make-checks = final.callPackage ./pkgs-by-name/make-checks/package.nix { };
+    mcp-server = final.callPackage ./pkgs-by-name/mcp-server/package.nix { };
     memsocket = final.callPackage ./pkgs-by-name/memsocket/package.nix { };
     open-normal-extension = final.callPackage ./pkgs-by-name/open-normal-extension/package.nix { };
     qemuqmp = final.python3Packages.callPackage ./python-packages/qemuqmp/package.nix { };

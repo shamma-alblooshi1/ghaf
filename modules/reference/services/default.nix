@@ -42,6 +42,7 @@ in
     ./chromecast/chromecast-config.nix
     ./nw-packet-forwarder/nw-packet-forwarder.nix
     ./wireguard-gui/wireguard-gui-config.nix
+    ./mcp-server/mcp-server.nix
   ];
   options.ghaf.reference.services = {
     enable = mkEnableOption "Ghaf reference services";
@@ -50,6 +51,7 @@ in
     google-chromecast = mkEnableOption "Chromecast service";
     alpaca-ollama = mkEnableOption "Alpaca/ollama service";
     wireguard-gui = mkEnableOption "Wireguard GUI service";
+    mcp-server = mkEnableOption "MCP server for AI agents";
   };
   config = mkIf cfg.enable {
     ghaf.reference.services = {
@@ -61,6 +63,7 @@ in
         vms = mkIf (wireguardGuiEnabledVms != [ ]) (mkForce wireguardGuiEnabledVms);
         enable = mkForce (cfg.wireguard-gui && isGuiVM);
       };
+      mcp-server.enable = mkForce (cfg.mcp-server && isGuiVM);
     };
   };
 }
