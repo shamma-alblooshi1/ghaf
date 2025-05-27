@@ -72,6 +72,10 @@ in
             enable = true;
             audio = true;
           };
+
+          dockervm = {
+            enable = true;
+          };
         };
       };
 

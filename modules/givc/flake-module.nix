@@ -17,6 +17,7 @@
       ./netvm.nix
       ./audiovm.nix
       ./appvm.nix
+      ./dockervm.nix
     ];
   };
 }

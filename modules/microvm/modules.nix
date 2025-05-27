@@ -229,6 +229,15 @@ in
       idsvm.extraModules = optionals cfg.idsvm.enable [
         commonModule
       ];
+
+      # Dockervm modules
+      dockervm.extraModules = optionals cfg.dockervm.enable [
+        serviceModules.givc
+        serviceModules.logging
+        managedUserAccounts
+        commonModule
+      ];
+
     };
   };
 }
