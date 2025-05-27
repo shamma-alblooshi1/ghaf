@@ -157,6 +157,12 @@
 
     };
 
+    claude-desktop = {
+      url = "github:k3d3/claude-desktop-linux-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
+
     ci-test-automation = {
       url = "github:tiiuae/ci-test-automation";
       inputs = {

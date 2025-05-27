@@ -48,6 +48,12 @@ in
         icon = "Zoom";
         command = "google-chrome-stable --enable-features=UseOzonePlatform --ozone-platform=wayland --app=https://app.zoom.us/wc/home ${config.ghaf.givc.idsExtraArgs}";
       }
+      {
+        name = "Claude Desktop";
+        description = "Claude Desktop";
+        icon = "cluade-code";
+        command = "claude-desktop --enable-features=UseOzonePlatform --ozone-platform=wayland";
+      }
     ];
     extraModules = [
       {
