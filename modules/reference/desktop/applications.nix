@@ -9,7 +9,7 @@
 let
   cfg = config.ghaf.reference.desktop.applications;
   inherit (lib) mkIf mkEnableOption;
-  falcon-launcher = pkgs.falcon-launcher.override {
+  llm-launcher = pkgs.llm-launcher.override {
     inherit (pkgs) ghaf-artwork;
   };
 in
@@ -59,10 +59,10 @@ in
       ]
       ++ lib.optionals config.ghaf.reference.services.alpaca-ollama [
         {
-          name = "Falcon AI";
-          description = "Your local large language model, developed by TII";
+          name = "AI Chat";
+          description = "Your local large language models";
           icon = "${pkgs.ghaf-artwork}/icons/falcon-icon.svg";
-          command = "${pkgs.falcon-launcher}/bin/falcon-launcher";
+          command = "${pkgs.llm-launcher}/bin/llm-launcher";
         }
       ]
       ++ lib.optionals config.ghaf.reference.programs.windows-launcher.enable (
