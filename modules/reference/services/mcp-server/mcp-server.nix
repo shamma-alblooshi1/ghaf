@@ -43,6 +43,12 @@ in
   };
 
   config = mkIf cfg.enable {
+    # Ensure the required packages are installed
+    environment.systemPackages = with pkgs; [
+      jq
+      socat
+    ];
+
     systemd.services.mcp-server = {
       description = "MCP Server for AI Agents";
       wantedBy = [ "multi-user.target" ];
