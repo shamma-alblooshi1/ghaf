@@ -20,6 +20,7 @@ in
       (import ./zathura.nix { inherit pkgs lib config; })
       (import ./comms.nix { inherit pkgs lib config; })
       (import ./business.nix { inherit pkgs lib config; })
+      (import ./jan.nix { inherit pkgs lib config; })
     ];
   };
 }
