@@ -8,5 +8,6 @@
     ./windows-launcher.nix
     ./element-desktop.nix
     ./firefox.nix
+    ./docker.nix
   ];
 }
