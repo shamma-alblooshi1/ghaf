@@ -148,6 +148,7 @@ let
                 [
                   pkgs.opensc
                   pkgs.givc-cli
+                  inputs.claude-desktop.packages.x86_64-linux.claude-desktop-with-fhs
                 ]
                 ++ vm.packages
                 ++ appPackages

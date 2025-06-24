@@ -40,6 +40,52 @@
         "type": "github"
       }
     },
+    "claude-desktop": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1749223377,
+        "narHash": "sha256-H50DosbznMYjzqPu6DYA1pNd7Ei/rFDFbznb4A50zEc=",
+        "owner": "k3d3",
+        "repo": "claude-desktop-linux-flake",
+        "rev": "21020c8ba14662447ad20ce19101436953268a7a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "k3d3",
+        "repo": "claude-desktop-linux-flake",
+        "type": "github"
+      }
+    },
+    "claude-desktop": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1749223377,
+        "narHash": "sha256-H50DosbznMYjzqPu6DYA1pNd7Ei/rFDFbznb4A50zEc=",
+        "owner": "k3d3",
+        "repo": "claude-desktop-linux-flake",
+        "rev": "21020c8ba14662447ad20ce19101436953268a7a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "k3d3",
+        "repo": "claude-desktop-linux-flake",
+        "type": "github"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1745454774,
@@ -476,6 +522,7 @@
     "root": {
       "inputs": {
         "ci-test-automation": "ci-test-automation",
+        "claude-desktop": "claude-desktop",
         "ctrl-panel": "ctrl-panel",
         "devshell": "devshell",
         "disko": "disko",
