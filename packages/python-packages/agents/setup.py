@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 
 # Copyright 2022-2024 TII (SSRC) and the Ghaf contributors
