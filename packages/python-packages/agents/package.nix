@@ -1,29 +1,27 @@
-                                                                                                                                                                                              
-# Copyright 2022-2025 TII (SSRC) and the Ghaf contributors                                                                                                                                    
-# SPDX-License-Identifier: Apache-2.0                                                                                                                                                         
-{                                                                                                                                                                                             
-  buildPythonApplication,                                                                                                                                                                     
-  python3,                                                                                                                                                                                    
-  pip,                                                                                                                                                                                        
-}:                                                                                                                                                                                            
-buildPythonApplication {                                                                                                                                                                      
-  pname = "agents";                                                                                                                                                        
-  version = "0.1.0";                                                                                                                                                                          
-                                                                                                                                                                                              
-  propagatedBuildInputs = [                                                                                                                                                                   
-    python3                                                                                                                                                                                   
-    pip                                                                                                                                                                                       
-  ];                                                                                                                                                                                          
-                                                                                                                                                                                              
-  src = ./.;                                                                                                                                                                                  
-  doCheck = false;                                                                                                                                                                            
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-  meta = {                                                                                                                                                                                    
-    description = "Multi-agent framework with MCP tools";                                                                                                                                     
-    platforms = [                                                                                                                                                                             
-      "aarch64-linux"                                                                                                                                                                         
-      "x86_64-linux"                                                                                                                                                                          
-    ];                                                                                                                                                                                        
-  };                                                                                                                                                                                          
-}                                                                                                                                                                                             
-    
+# Copyright 2022-2025 TII (SSRC) and the Ghaf contributors
+# SPDX-License-Identifier: Apache-2.0
+{
+  buildPythonApplication,
+  python3,
+  pip,
+}:
+buildPythonApplication {
+  pname = "agents";
+  version = "0.1.0";
+
+  propagatedBuildInputs = [
+    python3
+    pip
+  ];
+
+  src = ./.;
+  doCheck = false;
+
+  meta = {
+    description = "Multi-agent framework with MCP tools";
+    platforms = [
+      "aarch64-linux"
+      "x86_64-linux"
+    ];
+  };
+}

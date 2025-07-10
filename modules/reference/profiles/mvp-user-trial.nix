@@ -35,6 +35,7 @@ in
           zathura.enable = true;
           comms.enable = true;
           business.enable = true;
+          agents.enable = true;
         };
       };
 
