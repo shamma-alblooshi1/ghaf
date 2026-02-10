@@ -78,6 +78,12 @@ in
       default = false;
       description = "Enable the PoC systemd oneshot that publishes the SPIRE trust bundle to bundleOutPath.";
     };
+
+    socketpath = lib.mkOption {
+      type = lib.types.str;
+      default = "/tmp/spire-server/private/api.sock";
+      description = "Unix socket for spire-server";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -96,6 +102,7 @@ in
         trust_domain = "${cfg.trustDomain}"
         data_dir = "${cfg.dataDir}"
         log_level = "${cfg.logLevel}"
+        socket_path="${cfg.socketpath}"
       }
       plugins {
         DataStore "sql" {
@@ -116,6 +123,15 @@ in
       }
     '';
 
+    # --- Join token generation (PoC) ---
+    systemd.tmpfiles.rules = [
+      "d /tmp/spire-server 0755 root root - -"
+      "d /tmp/spire-server/private 0755 spire spire - -"
+    ]
+    ++ lib.optionals cfg.generateJoinTokens [
+      "d ${cfg.tokenDir} 0755 root root - -"
+    ];
+
     systemd.services.spire-server = {
       description = "SPIRE Server";
       wantedBy = [ "multi-user.target" ];
@@ -135,19 +151,17 @@ in
         RestartSec = "2s";
 
         NoNewPrivileges = true;
-        PrivateTmp = true;
+        PrivateTmp = false;
         ProtectSystem = "strict";
         ProtectHome = true;
-        ReadWritePaths = [ cfg.dataDir ];
+        ReadWritePaths = [
+          cfg.dataDir
+          "/tmp/spire-server"
+        ];
       };
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [ cfg.bindPort ];
-
-    # --- Join token generation (PoC) ---
-    systemd.tmpfiles.rules = lib.mkIf cfg.generateJoinTokens [
-      "d ${cfg.tokenDir} 0750 root root - -"
-    ];
 
     systemd.services.spire-generate-join-tokens = lib.mkIf cfg.generateJoinTokens {
       description = "Generate SPIRE join tokens for Ghaf VMs (PoC)";
@@ -161,40 +175,49 @@ in
         "network-online.target"
       ];
 
-      # Provide tools in PATH (awk, mkdir, etc.)
       path = [
         pkgs.coreutils
         pkgs.gawk
-        pkgs.spire
+        pkgs.spire-server
       ];
 
       serviceConfig = {
         Type = "oneshot";
+        RemainAfterExit = true;
         User = "root";
         ExecStart = pkgs.writeShellScript "spire-generate-join-tokens" ''
           set -euo pipefail
           mkdir -p "${cfg.tokenDir}"
-          # Wait until the server is up (best-effort)
-          for i in $(seq 1 30); do
-            if spire-server healthcheck >/dev/null 2>&1; then
+          chmod 755 "${cfg.tokenDir}"
+
+          # Wait until the server is up
+          for i in $(seq 1 60); do
+            if spire-server healthcheck -socketPath ${cfg.socketpath} >/dev/null 2>&1; then
+              echo "SPIRE server is ready"
               break
             fi
+            echo "Waiting for SPIRE server... ($i/60)"
             sleep 1
           done
+
           for vm in ${lib.concatStringsSep " " cfg.spireAgentVMs}; do
             f="${cfg.tokenDir}/''${vm}.token"
-            if [ -s "$f" ]; then
-              echo "token exists: $f"
+
+            # Check if agent is already registered
+            if spire-server agent list -socketPath ${cfg.socketpath} 2>/dev/null | grep -q "spiffe://${cfg.trustDomain}/agent/''${vm}"; then
+              echo "Agent $vm already registered, skipping token generation"
               continue
             fi
-            echo "creating token for $vm"
+
+            echo "Generating new token for $vm"
             token="$(spire-server token generate \
-              -spiffeID "spiffe://${cfg.trustDomain}/spire/agent/''${vm}" \
+              -socketPath ${cfg.socketpath} \
+              -spiffeID "spiffe://${cfg.trustDomain}/agent/''${vm}" \
               | awk '/^Token:/ {print $2}')"
-            umask 0077
+
             printf '%s\n' "$token" > "$f"
-            chmod 0440 "$f"
-            chown root:root "$f"
+            chmod 0644 "$f"
+            echo "Token written to $f"
           done
         '';
       };
@@ -219,10 +242,25 @@ in
           set -euo pipefail
           out="${cfg.bundleOutPath}"
           mkdir -p "$(dirname "$out")"
-          # Export current bundle from the server
-          spire-server bundle show > "$out"
-          chmod 0644 "$out"
-          chown root:root "$out"
+          # Wait until the server API socket exists and the server is ready
+          for i in $(seq 1 60); do
+            if [ -S "${cfg.socketpath}" ] && spire-server healthcheck -socketPath "${cfg.socketpath}" >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          if [ ! -S "${cfg.socketpath}" ]; then
+            echo "ERROR: SPIRE server socket not found at ${cfg.socketpath}" >&2
+            exit 1
+          fi
+          tmp="$(mktemp)"
+          spire-server bundle show -socketPath "${cfg.socketpath}" > "$tmp"
+          if [ ! -s "$tmp" ]; then
+            echo "ERROR: bundle export produced empty output" >&2
+            exit 1
+          fi
+          install -m 0644 -o root -g root "$tmp" "$out"
+          rm -f "$tmp"
           echo "Wrote $out"
         '';
       };

@@ -23,7 +23,7 @@ let
         let
           # List of VMs that will run spire-agent (token will be created if missing)
           spireAgentVMs = [
-            "chrome"
+            "chrome-vm"
           ];
 
           trustDomain = "ghaf.internal";
@@ -114,9 +114,10 @@ let
                 enable = true;
                 inherit spireAgentVMs;
                 inherit tokenDir;
-                # bundleOutPath = "/etc/common/spire/bundle.pem"; # /persist/common/spire/bundle.pem
-                # generateJoinTokens = true;
-                # publishBundle = true;
+
+                bundleOutPath = "/etc/common/spire/bundle.pem"; # /persist/common/spire/bundle.pem
+                generateJoinTokens = true;
+                publishBundle = true;
               };
             };
 

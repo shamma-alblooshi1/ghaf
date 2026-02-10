@@ -10,5 +10,6 @@
     ./ssh-tarpit
     ./fleet
     ../../secureboot/secureboot.nix
+    ./spiffe
   ];
 }
