@@ -1,0 +1,137 @@
+# SPDX-FileCopyrightText: 2022-2026 TII (SSRC) and the Ghaf contributors
+# SPDX-License-Identifier: Apache-2.0
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.ghaf.security.spiffe.agent;
+in
+{
+  options.ghaf.security.spiffe.agent = {
+    enable = lib.mkEnableOption "SPIRE agent";
+
+    trustDomain = lib.mkOption {
+      type = lib.types.str;
+      default = "ghaf.internal";
+      description = "SPIFFE trust domain expected from the server";
+    };
+
+    serverAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      description = "SPIRE server address reachable from this VM";
+    };
+
+    serverPort = lib.mkOption {
+      type = lib.types.port;
+      default = 8081;
+      description = "SPIRE server port";
+    };
+
+    dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/spire/agent";
+      description = "SPIRE agent state directory";
+    };
+
+    logLevel = lib.mkOption {
+      type = lib.types.str;
+      default = "INFO";
+      description = "SPIRE agent log level";
+    };
+
+    # For join_token attestation (PoC/benchmark):
+    joinTokenFile = lib.mkOption {
+      type = lib.types.str;
+      default = "/run/spire/join.token";
+      description = "Path to join token (file contents = token string)";
+    };
+
+    # Optional: expose Workload API socket for future (Envoy / apps):
+    workloadApiSocket = lib.mkOption {
+      type = lib.types.str;
+      default = "/run/spire/agent.sock";
+      description = "Unix socket for SPIRE Workload API";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ pkgs.spire ];
+
+    users.groups.spire = { };
+    users.users.spire = {
+      isSystemUser = true;
+      group = "spire";
+    };
+
+    environment.etc."spire/agent.conf".text = ''
+      agent {
+        data_dir = "${cfg.dataDir}"
+        log_level = "${cfg.logLevel}"
+        server_address = "${cfg.serverAddress}"
+        server_port = ${toString cfg.serverPort}
+        trust_domain = "${cfg.trustDomain}"
+        trust_bundle_path = "/etc/common/spire/bundle.pem"
+        workload_api {
+          socket_path = "${cfg.workloadApiSocket}"
+        }
+      }
+      plugins {
+        # PoC/benchmark node attestation:
+        NodeAttestor "join_token" {
+          plugin_data {
+            token_path = "${cfg.joinTokenFile}"
+          }
+        }
+        # Minimal workload attestation (unix)
+        WorkloadAttestor "unix" {
+          plugin_data {}
+        }
+        KeyManager "disk" {
+          plugin_data {
+            directory = "${cfg.dataDir}/keys"
+          }
+        }
+      }
+    '';
+
+    systemd.tmpfiles.rules = [
+      "d /run/spire 0750 spire spire - -"
+    ];
+
+    systemd.services.spire-agent = {
+      description = "SPIRE Agent";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+
+      serviceConfig = {
+        User = "spire";
+        Group = "spire";
+
+        ExecStart = "${pkgs.spire}/bin/spire-agent run -config /etc/spire/agent.conf";
+
+        StateDirectory = "spire/agent";
+        StateDirectoryMode = "0750";
+
+        RuntimeDirectory = "spire";
+        RuntimeDirectoryMode = "0750";
+
+        Restart = "on-failure";
+        RestartSec = "2s";
+
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [
+          cfg.dataDir
+          "/run/spire"
+        ];
+      };
+    };
+  };
+}

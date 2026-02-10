@@ -19,7 +19,16 @@ let
       inputs.self.nixosModules.vm-modules
       inputs.self.nixosModules.profiles
       (
-        { lib, ... }:
+        { lib, config, ... }:
+        let
+          # List of VMs that will run spire-agent (token will be created if missing)
+          spireAgentVMs = [
+            "chrome"
+          ];
+
+          trustDomain = "ghaf.internal";
+          tokenDir = "/etc/common/spire/tokens"; # /persist/common/spire/tokens
+        in
         {
           ghaf = {
             # Profiles
@@ -96,6 +105,20 @@ let
             };
 
             security.fail2ban.enable = configHost.ghaf.development.ssh.daemon.enable;
+
+            # SPIFFE/SPIRE
+            security.spiffe = {
+              enable = true;
+              inherit trustDomain;
+              server = {
+                enable = true;
+                inherit spireAgentVMs;
+                inherit tokenDir;
+                # bundleOutPath = "/etc/common/spire/bundle.pem"; # /persist/common/spire/bundle.pem
+                # generateJoinTokens = true;
+                # publishBundle = true;
+              };
+            };
 
           };
 
