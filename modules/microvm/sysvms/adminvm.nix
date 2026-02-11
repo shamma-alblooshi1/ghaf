@@ -120,6 +120,7 @@ let
                     name = "chrome";
                     selectors = [ "unix:user:ghaf" ];
                   }
+                  #add more per vm
                 ];
                 bundleOutPath = "/etc/common/spire/bundle.pem"; # /persist/common/spire/bundle.pem
                 generateJoinTokens = true;

@@ -314,6 +314,7 @@ in
         User = "root";
         ExecStart = pkgs.writeShellScript "spire-create-workload-entries" ''
           SOCKET="${cfg.socketpath}"
+          TRUST_DOMAIN="${cfg.trustDomain}"
 
           # Wait for server
           echo "Waiting for server..."
@@ -343,19 +344,41 @@ in
             exit 0
           fi
 
-          # Create chrome workload entry
-          SPIFFE_ID="spiffe://${cfg.trustDomain}/workload/chrome"
-          EXISTING=$(spire-server entry show -socketPath "$SOCKET" 2>/dev/null | grep -c "$SPIFFE_ID" || true)
-          if [ "$EXISTING" -gt 0 ]; then
-            echo "Entry already exists: chrome"
-          else
-            echo "Creating entry: chrome"
-            spire-server entry create \
-              -socketPath "$SOCKET" \
-              -parentID "$PARENT_ID" \
-              -spiffeID "$SPIFFE_ID" \
-              -selector unix:user:ghaf
-          fi
+          # Function to create entry
+          create_entry() {
+            local name="$1"
+            shift
+            local selectors=("$@")
+
+            local spiffe_id="spiffe://$TRUST_DOMAIN/workload/$name"
+
+            # Check if entry exists
+            EXISTING=$(spire-server entry show -socketPath "$SOCKET" 2>/dev/null | grep -c "$spiffe_id" || true)
+
+            if [ "$EXISTING" -gt 0 ]; then
+              echo "Entry already exists: $name"
+            else
+              echo "Creating entry: $name"
+
+              # Build selector args
+              local selector_args=""
+              for sel in "''${selectors[@]}"; do
+                selector_args="$selector_args -selector $sel"
+              done
+
+              spire-server entry create \
+                -socketPath "$SOCKET" \
+                -parentID "$PARENT_ID" \
+                -spiffeID "$spiffe_id" \
+                $selector_args
+            fi
+          }
+
+          # Create entries from config
+          ${lib.concatMapStringsSep "\n" (
+            entry:
+            ''create_entry "${entry.name}" ${lib.concatMapStringsSep " " (s: ''"${s}"'') entry.selectors}''
+          ) cfg.workloadEntries}
 
           echo "Done"
         '';
