@@ -114,7 +114,13 @@ let
                 enable = true;
                 inherit spireAgentVMs;
                 inherit tokenDir;
-
+                createWorkloadEntries = true;
+                workloadEntries = [
+                  {
+                    name = "chrome";
+                    selectors = [ "unix:user:ghaf" ];
+                  }
+                ];
                 bundleOutPath = "/etc/common/spire/bundle.pem"; # /persist/common/spire/bundle.pem
                 generateJoinTokens = true;
                 publishBundle = true;
