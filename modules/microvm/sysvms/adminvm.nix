@@ -122,7 +122,13 @@ let
                 enable = true;
                 inherit spireAgentVMs;
                 inherit tokenDir;
-
+                createWorkloadEntries = true;
+                workloadEntries = [
+                  {
+                    name = "workload";
+                    selectors = [ "unix:user:ghaf" ];
+                  }
+                ];
                 bundleOutPath = "/etc/common/spire/bundle.pem"; # /persist/common/spire/bundle.pem
                 generateJoinTokens = true;
                 publishBundle = true;

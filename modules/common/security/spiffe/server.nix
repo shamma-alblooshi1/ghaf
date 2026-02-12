@@ -43,7 +43,6 @@ let
         echo "Generating new token for $vm"
         token="$(spire-server token generate \
           -socketPath ${cfg.socketpath} \
-          -spiffeID "spiffe://${cfg.trustDomain}/agent/''${vm}" \
           | awk '/^Token:/ {print $2}')"
 
         printf '%s\n' "$token" > "$f"
@@ -165,6 +164,32 @@ in
       default = "/tmp/spire-server/private/api.sock";
       description = "Unix socket for spire-server";
     };
+
+    createWorkloadEntries = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Auto-create workload entries";
+    };
+
+    workloadEntries = lib.mkOption {
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            name = lib.mkOption {
+              type = lib.types.str;
+              description = "Workload name";
+            };
+            selectors = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [ "unix:user:ghaf" ];
+              description = "Workload selectors";
+            };
+          };
+        }
+      );
+      default = [ ];
+      description = "Workload entries to register";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -272,6 +297,116 @@ in
         Type = "oneshot";
         User = "root";
         ExecStart = lib.getExe spirePublishBundleApp;
+      };
+    };
+
+    systemd.services.spire-create-workload-entries = lib.mkIf cfg.createWorkloadEntries {
+      description = "Create SPIRE workload entries";
+      wantedBy = [ "multi-user.target" ];
+      after = [
+        "spire-server.service"
+        "spire-generate-join-tokens.service"
+      ];
+      wants = [ "spire-server.service" ];
+
+      path = [
+        pkgs.coreutils
+        pkgs.gawk
+        pkgs.gnugrep
+        pkgs.spire-server
+      ];
+
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        User = "root";
+        ExecStart = pkgs.writeShellScript "spire-create-workload-entries" ''
+          set -euo pipefail
+
+          SOCKET="${cfg.socketpath}"
+          TRUST_DOMAIN="${cfg.trustDomain}"
+          EXPECTED_AGENTS=${toString (builtins.length cfg.spireAgentVMs)}
+
+          echo "=== SPIRE Workload Entry Creator ==="
+          echo "Expected agents: $EXPECTED_AGENTS"
+
+          # Wait for server
+          echo "Waiting for server..."
+          for i in $(seq 1 60); do
+            if spire-server healthcheck -socketPath "$SOCKET" >/dev/null 2>&1; then
+              echo "Server ready"
+              break
+            fi
+            sleep 1
+          done
+
+          # Wait for ALL expected agents (up to 10 minutes)
+          echo "Waiting for all $EXPECTED_AGENTS agents to register..."
+          AGENT_COUNT=0
+          for i in $(seq 1 90); do
+            AGENT_COUNT=$(spire-server agent list -socketPath "$SOCKET" 2>/dev/null | grep -c "SPIFFE ID" || echo "0")
+            if [ "$AGENT_COUNT" -ge "$EXPECTED_AGENTS" ]; then
+              echo "All agents registered: $AGENT_COUNT/$EXPECTED_AGENTS"
+              break
+            fi
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Waiting... $AGENT_COUNT/$EXPECTED_AGENTS agents [$i/300]"
+            fi
+            sleep 2
+          done
+
+          if [ "$AGENT_COUNT" -lt "$EXPECTED_AGENTS" ]; then
+            echo "WARNING: Only $AGENT_COUNT/$EXPECTED_AGENTS agents registered after timeout"
+            echo "Continuing with available agents..."
+          fi
+
+          # Get ALL agent IDs
+          AGENT_IDS=$(spire-server agent list -socketPath "$SOCKET" 2>/dev/null | grep "SPIFFE ID" | awk -F': ' '{print $2}' | tr -d ' ')
+
+          if [ -z "$AGENT_IDS" ]; then
+            echo "ERROR: No agents found"
+            exit 1
+          fi
+
+          AGENT_COUNT=$(echo "$AGENT_IDS" | wc -l)
+          echo ""
+          echo "Creating entries for $AGENT_COUNT agents..."
+
+          # Workload names
+          WORKLOADS="${lib.concatMapStringsSep " " (e: e.name) cfg.workloadEntries}"
+
+          # Create entries for EACH agent
+          CREATED=0
+          SKIPPED=0
+
+          for PARENT_ID in $AGENT_IDS; do
+            echo ""
+            echo "--- Agent: $PARENT_ID ---"
+
+            for WORKLOAD in $WORKLOADS; do
+              SPIFFE_ID="spiffe://$TRUST_DOMAIN/workload/$WORKLOAD"
+
+              # Check if entry exists for this agent+workload combo
+              EXISTS=$(spire-server entry show -socketPath "$SOCKET" 2>/dev/null | grep -A1 "$SPIFFE_ID" | grep -c "$PARENT_ID" || echo "0")
+
+              if [ "$EXISTS" -gt 0 ]; then
+                echo "  [skip] $WORKLOAD"
+                SKIPPED=$((SKIPPED + 1))
+              else
+                echo "  [create] $WORKLOAD"
+                spire-server entry create \
+                  -socketPath "$SOCKET" \
+                  -parentID "$PARENT_ID" \
+                  -spiffeID "$SPIFFE_ID" \
+                  -selector unix:user:ghaf >/dev/null 2>&1 || echo "  [FAILED] $WORKLOAD"
+                CREATED=$((CREATED + 1))
+              fi
+            done
+          done
+
+
+          echo "Done"
+        '';
       };
     };
   };
