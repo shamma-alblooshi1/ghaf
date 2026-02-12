@@ -9,6 +9,7 @@
 }:
 let
   cfg = config.ghaf.virtualization.microvm-host;
+  inherit (config.networking) hostName;
   inherit (lib)
     mkEnableOption
     mkIf
@@ -119,6 +120,18 @@ in
         };
         logging.client.enable = config.ghaf.logging.enable;
         common.extraNetworking.hosts.ghaf-host = cfg.extraNetworking;
+
+        security.spiffe = {
+          enable = true;
+          agent = {
+            enable = true;
+            serverAddress = "192.168.100.5";
+            serverPort = 8081;
+            trustDomain = "ghaf.internal";
+            joinTokenFile = "/persist/common/spire/tokens/${hostName}.token";
+            trustBundlePath = "/persist/common/spire/bundle.pem";
+          };
+        };
       };
 
       # Create required host directories

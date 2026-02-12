@@ -173,6 +173,17 @@ let
             xdgitems.enable = true;
 
             security.fail2ban.enable = config.ghaf.development.ssh.daemon.enable;
+
+            security.spiffe = {
+              enable = true;
+              agent = {
+                enable = true;
+                serverAddress = "192.168.100.5";
+                serverPort = 8081;
+                trustDomain = "ghaf.internal";
+                joinTokenFile = "/etc/common/spire/tokens/${vmName}.token";
+              };
+            };
           };
 
           services = {

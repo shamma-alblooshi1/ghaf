@@ -104,6 +104,16 @@ let
                 inherit (config.ghaf.development.ssh.daemon) enable;
                 listenAddress = config.ghaf.networking.hosts.${vmName}.ipv4;
               };
+              spiffe = {
+                enable = true;
+                agent = {
+                  enable = true;
+                  serverAddress = "192.168.100.5";
+                  serverPort = 8081;
+                  trustDomain = "ghaf.internal";
+                  joinTokenFile = "/etc/common/spire/tokens/${vmName}.token";
+                };
+              };
             };
           };
 
